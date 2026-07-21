@@ -191,11 +191,19 @@ export async function consumeInviteToken(token: string): Promise<boolean> {
   const cleanToken = token.trim().toUpperCase();
 
   try {
-    await supabase
+    const { error } = await supabase
       .from("invite_tokens")
       .update({ is_used: true, used_at: new Date().toISOString() })
       .eq("token", cleanToken);
-  } catch {}
+
+    if (error) {
+      console.error("[consumeInviteToken] Supabase update failed:", error.message, error);
+    } else {
+      console.log("[consumeInviteToken] Token marked as used in Supabase:", cleanToken);
+    }
+  } catch (err: any) {
+    console.error("[consumeInviteToken] Unexpected error:", err?.message ?? err);
+  }
 
   // Also update local storage
   const local = getLocalTokens();
