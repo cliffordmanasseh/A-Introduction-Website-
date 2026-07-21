@@ -130,13 +130,12 @@ export default function PollPage({
     <AudioProvider>
       <div className="min-h-screen flex flex-col items-center justify-between px-4 md:px-8 py-8 bg-base text-text relative">
         {/* Top Header Step Bar */}
-        <div className="w-full max-w-xl flex items-center justify-between opacity-80 text-xs font-outfit font-semibold text-text-muted">
+        <div className="w-full max-w-xl flex items-center justify-center opacity-80 text-xs font-outfit font-semibold text-text-muted">
           <span>பாடல் {stepNum} / {TOTAL_TRACKS}</span>
-          <span>மறைமுக ஆடிஷன்</span>
         </div>
 
         {/* Main Interface Content */}
-        <main className="max-w-xl w-full my-auto space-y-10 py-6 text-center">
+        <main className="max-w-xl w-full my-auto space-y-6 py-4 text-center">
           <AnimatePresence mode="wait">
             <motion.div
               key={trackItem.id}
@@ -181,8 +180,13 @@ export default function PollPage({
             </motion.div>
           </AnimatePresence>
 
+          {/* Prominent Completion Progress Bar inside Main view */}
+          <div className="pt-2">
+            <CompletionBar currentStep={stepNum} totalSteps={TOTAL_TRACKS} />
+          </div>
+
           {/* Navigation Controls */}
-          <div className="flex items-center justify-between gap-3 max-w-md mx-auto pt-4">
+          <div className="flex items-center justify-between gap-3 max-w-md mx-auto pt-2">
             <button
               onClick={handlePrev}
               disabled={stepNum <= 1}
@@ -215,11 +219,6 @@ export default function PollPage({
             </button>
           </div>
         </main>
-
-        {/* Completion Progress Bar */}
-        <div className="w-full max-w-xl my-4">
-          <CompletionBar currentStep={stepNum} totalSteps={TOTAL_TRACKS} />
-        </div>
 
         {/* Footer info */}
         <footer className="w-full text-center py-2 text-[11px] text-text-muted font-inter">
