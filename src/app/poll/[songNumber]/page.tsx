@@ -23,6 +23,7 @@ import { CompletionBar } from "@/components/poll/CompletionBar";
 import { useLanguageStore } from "@/store/useLanguageStore";
 import { translations } from "@/lib/translations";
 import { LanguageToggle } from "@/components/common/LanguageToggle";
+import { saveDraftProgress } from "@/lib/supabase";
 
 export default function PollPage({
   params,
