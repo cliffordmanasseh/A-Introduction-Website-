@@ -15,11 +15,16 @@ import {
 import { usePollStore } from "@/store/usePollStore";
 import { ParticleField } from "@/components/effects/Effects";
 import { HeadphoneBanner } from "@/components/engagement/Engagement";
-import { verifyInviteToken, fetchDraftProgress } from "@/lib/supabase";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { translations } from "@/lib/translations";
+import { LanguageToggle } from "@/components/common/LanguageToggle";
 
 function LandingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { language } = useLanguageStore();
+  const t = translations[language];
+
   const {
     hasCompleted,
     currentStepIndex,
@@ -59,17 +64,17 @@ function LandingContent() {
     if (!code.trim()) return;
 
     setTokenStatus("verifying");
-    setStatusMessage("சரிபார்க்கப்படுகிறது...");
+    setStatusMessage(t.verifying);
 
     const res = await verifyInviteToken(code);
 
     if (!res.valid) {
       setTokenStatus("invalid");
-      setStatusMessage("தவறான அழைப்பு குறியீடு. இணைப்பைச் சரிபார்க்கவும்.");
+      setStatusMessage(t.invalidToken);
       setInviteToken(null);
     } else if (res.isUsed) {
       setTokenStatus("used");
-      setStatusMessage("இந்த அழைப்பு இணைப்பு ஏற்கனவே பயன்படுத்தப்பட்டுள்ளது.");
+      setStatusMessage(t.usedToken);
       setInviteToken(null);
     } else {
       setTokenStatus("valid");
@@ -84,9 +89,13 @@ function LandingContent() {
         if (typeof draft.currentStepIndex === "number") {
           goToStep(draft.currentStepIndex);
         }
-        setStatusMessage(`அழைப்பு குறியீடு சரிபார்க்கப்பட்டது! (முன்னேற்றம் மீட்டமைக்கப்பட்டது: ${Object.keys(draft.ratings).length} பாடல்கள்)`);
+        setStatusMessage(
+          language === "ta"
+            ? `அழைப்பு குறியீடு சரிபார்க்கப்பட்டது! (${Object.keys(draft.ratings).length} பாடல்கள் மீட்டமைக்கப்பட்டன)`
+            : `Invite code verified! (${Object.keys(draft.ratings).length} songs restored)`
+        );
       } else {
-        setStatusMessage("செல்லுபடியாகும் அழைப்பு குறியீடு!");
+        setStatusMessage(t.validToken);
       }
     }
   };
@@ -104,7 +113,7 @@ function LandingContent() {
   };
 
   const handleStartOver = () => {
-    if (confirm("உங்கள் தற்போதைய முன்னேற்றத்தை மீட்டமைத்து புதிய அமர்வைத் தொடங்கவா?")) {
+    if (confirm(t.resetConfirm)) {
       resetPoll();
       initOrders();
       router.push("/poll/1");
@@ -125,11 +134,16 @@ function LandingContent() {
   const canProceed = !isTokenRequired || tokenStatus === "valid" || hasStarted || hasCompleted;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-between px-4 md:px-8 py-10 relative bg-base">
+    <div className="min-h-screen flex flex-col items-center justify-between px-4 md:px-8 py-6 relative bg-base">
       <ParticleField count={20} />
 
+      {/* Top Bar with Language Toggle */}
+      <div className="w-full max-w-2xl flex items-center justify-end z-20 pt-2">
+        <LanguageToggle />
+      </div>
+
       {/* Hero Section */}
-      <main className="max-w-2xl w-full text-center space-y-8 my-auto py-8 z-10">
+      <main className="max-w-2xl w-full text-center space-y-8 my-auto py-6 z-10">
         {/* Title & Description */}
         <div className="space-y-4 px-2">
           <motion.h1
@@ -138,7 +152,7 @@ function LandingContent() {
             transition={{ delay: 0.15 }}
             className="text-3xl md:text-4xl font-outfit font-extrabold text-text text-embossed tracking-tight leading-snug"
           >
-            வணக்கம்! <span className="gradient-text">நமது குடும்பப் பாடலை இணைந்து உருவாக்குவோம்! 🎵</span>
+            {t.landingTitle}
           </motion.h1>
 
           <motion.p
@@ -147,7 +161,7 @@ function LandingContent() {
             transition={{ delay: 0.2 }}
             className="text-text-secondary font-inter text-base md:text-lg max-w-xl mx-auto leading-relaxed"
           >
-            இந்தப் பாடலுக்கு எந்த வகையான இசை ட்யூன் சரியாக இருக்கும் என்பதைத் தீர்மானிக்க உங்கள் உதவி தேவை. கீழே உள்ள வாக்கெடுப்பில் உங்கள் விருப்பமான இசை அமைப்பைத் தேர்ந்தெடுங்கள்!
+            {t.landingSub}
           </motion.p>
         </div>
 
@@ -160,24 +174,24 @@ function LandingContent() {
         >
           <h2 className="font-outfit font-extrabold text-sm text-text text-embossed flex items-center gap-2">
             <HelpCircle className="w-4 h-4 text-primary" />
-            பங்கேற்பது எப்படி?
+            {t.howToTitle}
           </h2>
           <ul className="space-y-2.5 text-xs text-text-secondary font-inter leading-relaxed">
             <li className="flex items-start gap-2">
               <span className="font-bold text-primary shrink-0">1.</span>
-              <span><strong className="text-text font-semibold">ஹெட்ஃபோன் அணியவும்:</strong> சிறந்த இசை அனுபவத்தைப் பெற ஹெட்ஃபோன் பயன்படுத்தவும்.</span>
+              <span>{t.step1}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="font-bold text-primary shrink-0">2.</span>
-              <span><strong className="text-text font-semibold">இசையைக் கேட்கவும்:</strong> பிளே பொத்தானைத் தட்டி இசையைக் கேட்கவும்.</span>
+              <span>{t.step2}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="font-bold text-primary shrink-0">3.</span>
-              <span><strong className="text-text font-semibold">மதிப்பிடவும்:</strong> இந்தப் பாடலை நீங்கள் பாட விரும்பும் அளவை 0 முதல் 10 வரை தேர்வு செய்யவும்.</span>
+              <span>{t.step3}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="font-bold text-primary shrink-0">4.</span>
-              <span><strong className="text-text font-semibold">அடுத்த பாடல்:</strong> மதிப்பிட்ட பின் &apos;அடுத்தது&apos; பொத்தானைக் கிளிக் செய்யவும்.</span>
+              <span>{t.step4}</span>
             </li>
           </ul>
         </motion.div>
@@ -202,7 +216,7 @@ function LandingContent() {
           >
             <div className="flex items-center gap-2 text-sm font-outfit font-bold text-text">
               <Ticket className="w-4 h-4 text-primary" />
-              அழைப்பு குறியீடு / இணைப்பு
+              {t.invitePrompt}
             </div>
 
             <div className="flex gap-2">
@@ -214,7 +228,7 @@ function LandingContent() {
                   setTokenStatus("idle");
                   setStatusMessage("");
                 }}
-                placeholder="அழைப்பு குறியீட்டை உள்ளிடவும் (எ.கா: AUDITION-XXXX)"
+                placeholder={t.invitePlaceholder}
                 className="flex-1 px-4 py-2.5 rounded-xl skeu-inset text-text placeholder:text-text-muted font-inter text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase tracking-wider"
               />
               <button
@@ -225,7 +239,7 @@ function LandingContent() {
                 {tokenStatus === "verifying" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  "சரிபார்"
+                  t.verifyBtn
                 )}
               </button>
             </div>
@@ -259,7 +273,7 @@ function LandingContent() {
               className="w-full sm:w-auto px-8 py-4 skeu-btn-primary font-outfit font-bold text-base flex items-center justify-center gap-3"
             >
               <CheckCircle2 className="w-5 h-5" />
-              உங்கள் ரசீதைப் பார்க்கவும்
+              {t.viewReceiptBtn}
             </button>
           ) : hasStarted ? (
             <>
@@ -267,16 +281,16 @@ function LandingContent() {
                 onClick={handleResume}
                 className="w-full sm:flex-1 py-4 px-6 skeu-btn-primary font-outfit font-bold text-base flex items-center justify-center gap-2"
               >
-                தொடரவும் - பாடல் #{currentStepIndex + 1}
+                {t.resumePollBtn}{currentStepIndex + 1}
                 <ArrowRight className="w-5 h-5" />
               </button>
               <button
                 onClick={handleStartOver}
                 className="w-full sm:w-auto py-4 px-5 skeu-btn text-text-secondary font-outfit font-semibold text-sm flex items-center justify-center gap-2"
-                title="மீட்டமை"
+                title={t.resetBtn}
               >
                 <RotateCcw className="w-4 h-4" />
-                மீட்டமை
+                {t.resetBtn}
               </button>
             </>
           ) : (
@@ -291,7 +305,7 @@ function LandingContent() {
                 }
               `}
             >
-              வாக்கெடுப்பைத் தொடங்குங்கள்
+              {t.startPollBtn}
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </button>
           )}
@@ -300,7 +314,7 @@ function LandingContent() {
 
       {/* Footer */}
       <footer className="w-full text-center py-4 z-10 font-inter text-xs text-text-muted">
-        ஆராதனை பாடல் ஆடிஷன் &bull; அழைப்பு மூலம் மட்டுமே
+        {t.footerInvite}
       </footer>
     </div>
   );

@@ -20,7 +20,9 @@ import { getTrackItemByIndex, TOTAL_TRACKS } from "@/lib/songs";
 import { AudioProvider } from "@/components/audio/AudioProvider";
 import { RatingSlider } from "@/components/poll/RatingSlider";
 import { CompletionBar } from "@/components/poll/CompletionBar";
-import { saveDraftProgress } from "@/lib/supabase";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { translations } from "@/lib/translations";
+import { LanguageToggle } from "@/components/common/LanguageToggle";
 
 export default function PollPage({
   params,
@@ -31,6 +33,9 @@ export default function PollPage({
   const router = useRouter();
   const stepNum = parseInt(songNumber, 10);
   const stepIndex = stepNum - 1;
+
+  const { language } = useLanguageStore();
+  const t = translations[language];
 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -69,7 +74,7 @@ export default function PollPage({
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-base p-4">
         <div className="skeu-raised p-8 text-center space-y-4 max-w-sm">
-          <p className="text-text font-outfit font-bold text-lg">பாடல் இன்னும் தயாராகவில்லை</p>
+          <p className="text-text font-outfit font-bold text-lg">{t.notReadyTitle}</p>
           <button
             onClick={() => {
               initOrders();
@@ -77,7 +82,7 @@ export default function PollPage({
             }}
             className="skeu-btn-primary px-6 py-2.5 font-outfit font-semibold text-sm w-full"
           >
-            பாடல் #1 இல் இருந்து தொடங்கு
+            {t.startFromTrack1}
           </button>
         </div>
       </div>
@@ -128,10 +133,13 @@ export default function PollPage({
 
   return (
     <AudioProvider>
-      <div className="min-h-screen flex flex-col items-center justify-between px-4 md:px-8 py-8 bg-base text-text relative">
+      <div className="min-h-screen flex flex-col items-center justify-between px-4 md:px-8 py-6 bg-base text-text relative">
         {/* Top Header Step Bar */}
-        <div className="w-full max-w-xl flex items-center justify-center opacity-80 text-xs font-outfit font-semibold text-text-muted">
-          <span>பாடல் {stepNum} / {TOTAL_TRACKS}</span>
+        <div className="w-full max-w-xl flex items-center justify-between opacity-90 text-xs font-outfit font-semibold text-text-muted">
+          <span>
+            {t.song} {stepNum} {t.of} {TOTAL_TRACKS}
+          </span>
+          <LanguageToggle compact />
         </div>
 
         {/* Main Interface Content */}
@@ -147,7 +155,7 @@ export default function PollPage({
             >
               {/* Description */}
               <h1 className="text-xl md:text-2xl font-outfit font-bold text-text text-embossed leading-relaxed max-w-lg mx-auto">
-                1 முதல் 10 வரையிலான புள்ளிகளில், இந்தப் பாடலை உங்கள் சொந்தப் பாடலாகப் பாட எவ்வளவு விரும்புகிறீர்கள்?
+                {t.pollQuestion}
               </h1>
 
               {/* Play Button */}
@@ -168,7 +176,7 @@ export default function PollPage({
                   )}
                 </button>
                 <span className="text-xs font-inter font-medium text-text-secondary">
-                  {isAudioPlaying ? "பாடல் ஒலிக்கிறது..." : "பாடலைக் கேட்க தட்டவும்"}
+                  {isAudioPlaying ? t.playing : t.tapToPlay}
                 </span>
               </div>
 
@@ -193,28 +201,28 @@ export default function PollPage({
               className="skeu-btn px-4 py-3 rounded-2xl font-outfit font-semibold text-xs md:text-sm flex items-center gap-1 text-text-secondary hover:text-text disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
-              முந்தைய
+              {t.prevBtn}
             </button>
 
             <button
               onClick={handleSaveAndExit}
               disabled={isSaving}
               className="skeu-btn px-4 py-3 rounded-2xl font-outfit font-semibold text-xs md:text-sm flex items-center gap-1.5 text-primary hover:text-primary-dark transition-all disabled:opacity-50"
-              title="உங்கள் தற்போதைய முன்னேற்றத்தைச் சேமிக்க"
+              title={t.saveBtn}
             >
               {isSaving ? (
                 <Loader2 className="w-4 h-4 animate-spin text-primary" />
               ) : (
                 <Save className="w-4 h-4 text-primary" />
               )}
-              சேமிக்க
+              {t.saveBtn}
             </button>
 
             <button
               onClick={handleNext}
               className="skeu-btn-primary px-6 py-3 rounded-2xl font-outfit font-bold text-xs md:text-sm flex items-center gap-1.5 text-white shadow-lg hover:scale-105 active:scale-95 transition-all"
             >
-              {isLastTrack ? "சமர்ப்பிக்க" : "அடுத்தது"}
+              {isLastTrack ? t.submitBtn : t.nextBtn}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -222,7 +230,7 @@ export default function PollPage({
 
         {/* Footer info */}
         <footer className="w-full text-center py-2 text-[11px] text-text-muted font-inter">
-          மறைமுக ஆடிஷன் &bull; 0 முதல் 10 வரை மதிப்பிடவும்
+          {t.footerAudit}
         </footer>
 
         {/* Save Confirmation Modal */}
@@ -248,16 +256,18 @@ export default function PollPage({
 
                 <div className="space-y-1.5">
                   <h3 className="text-xl font-outfit font-extrabold text-text text-embossed">
-                    முன்னேற்றம் சேமிக்கப்பட்டது!
+                    {t.saveModalTitle}
                   </h3>
                   <p className="text-xs text-text-secondary font-inter leading-relaxed">
-                    உங்கள் பதில்கள் (<strong>{ratedCount} / {TOTAL_TRACKS} பாடல்கள்</strong>) பாதுகாப்பாக சேமிக்கப்பட்டுள்ளன.
+                    {t.saveModalMsg
+                      .replace("{count}", String(ratedCount))
+                      .replace("{total}", String(TOTAL_TRACKS))}
                   </p>
                 </div>
 
                 <div className="skeu-inset p-3.5 rounded-2xl text-left text-[11px] text-text-muted space-y-1 font-inter">
-                  <p className="font-semibold text-text">💡 எப்படி மீண்டும் தொடர்வது?</p>
-                  <p>இந்தப் பக்கத்தின் இணைப்பை மீண்டும் திறந்தால் போதும், நீங்கள் விட்ட இடத்தில் இருந்து தொடரலாம்.</p>
+                  <p className="font-semibold text-text">{t.saveModalTipHeader}</p>
+                  <p>{t.saveModalTipBody}</p>
                 </div>
 
                 <div className="flex flex-col gap-2 pt-1">
@@ -265,14 +275,14 @@ export default function PollPage({
                     onClick={() => setShowSaveModal(false)}
                     className="w-full py-3 skeu-btn-primary font-outfit font-bold text-sm text-white rounded-xl"
                   >
-                    தொடர்ந்து மதிப்பிடவும்
+                    {t.continueRatingBtn}
                   </button>
                   <button
                     onClick={() => router.push("/")}
                     className="w-full py-2.5 skeu-btn font-outfit font-semibold text-xs text-text-secondary rounded-xl flex items-center justify-center gap-1.5"
                   >
                     <Home className="w-3.5 h-3.5" />
-                    முகப்புப் பக்கத்திற்குச் செல்
+                    {t.goHomeBtn}
                   </button>
                 </div>
               </motion.div>

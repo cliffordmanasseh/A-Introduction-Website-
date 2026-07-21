@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { translations } from "@/lib/translations";
 
 interface RatingSliderProps {
   value: number;
@@ -8,6 +10,8 @@ interface RatingSliderProps {
 }
 
 export function RatingSlider({ value, onChange }: RatingSliderProps) {
+  const { language } = useLanguageStore();
+  const t = translations[language];
   const values = Array.from({ length: 11 }, (_, i) => i);
 
   return (
@@ -43,8 +47,8 @@ export function RatingSlider({ value, onChange }: RatingSliderProps) {
 
         {/* Min/Max Labels */}
         <div className="flex justify-between text-xs font-inter text-text-secondary mt-2 px-1">
-          <span>0 (சற்றும் இல்லை)</span>
-          <span>10 (மிகவும் விருப்பம்)</span>
+          <span>0 ({t.notAtAll})</span>
+          <span>10 ({t.highlyPrefer})</span>
         </div>
       </div>
 

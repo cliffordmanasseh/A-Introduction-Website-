@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 import { CheckCircle2, Flame, Award } from "lucide-react";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { translations } from "@/lib/translations";
 
 interface CompletionBarProps {
   currentStep: number;
@@ -16,6 +18,9 @@ export function CompletionBar({
   showPercentageLabel = true,
   className = "",
 }: CompletionBarProps) {
+  const { language } = useLanguageStore();
+  const t = translations[language];
+
   const percentage = Math.min(
     100,
     Math.max(0, Math.round((currentStep / totalSteps) * 100))
@@ -23,10 +28,10 @@ export function CompletionBar({
   const remaining = Math.max(0, totalSteps - currentStep);
 
   const getEncouragementSubtext = () => {
-    if (percentage >= 100) return "அனைத்தும் முடிந்தது! சமர்ப்பிக்க தயார் ✨";
-    if (percentage >= 75) return `கிட்டத்தட்ட முடிந்துவிட்டது! இன்னும் ${remaining} மட்டுமே 🔥`;
-    if (percentage >= 50) return `பாதி வழி தாண்டியாச்சு! இன்னும் ${remaining} மீதம் உள்ளன 👍`;
-    return `இன்னும் ${remaining} பாடல்கள் மீதம் உள்ளன`;
+    if (percentage >= 100) return t.allDone;
+    if (percentage >= 75) return t.almostDone.replace("{n}", String(remaining));
+    if (percentage >= 50) return t.halfWay.replace("{n}", String(remaining));
+    return t.songsRemaining.replace("{n}", String(remaining));
   };
 
   return (
@@ -42,7 +47,7 @@ export function CompletionBar({
               <Award className="w-4 h-4 text-primary" />
             )}
             <span className="text-primary text-sm font-extrabold">{percentage}%</span>
-            <span className="text-text-secondary font-semibold">நிறைவடைந்துள்ளது</span>
+            <span className="text-text-secondary font-semibold">{t.completed}</span>
           </div>
 
           <span className="text-[11px] font-inter text-text-muted">
