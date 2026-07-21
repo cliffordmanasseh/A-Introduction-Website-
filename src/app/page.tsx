@@ -18,6 +18,7 @@ import { HeadphoneBanner } from "@/components/engagement/Engagement";
 import { useLanguageStore } from "@/store/useLanguageStore";
 import { translations } from "@/lib/translations";
 import { LanguageToggle } from "@/components/common/LanguageToggle";
+import { verifyInviteToken, fetchDraftProgress } from "@/lib/supabase";
 
 function LandingContent() {
   const router = useRouter();
