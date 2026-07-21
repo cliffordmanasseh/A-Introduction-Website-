@@ -204,6 +204,13 @@ function LandingContent() {
               <span>{t.step4}</span>
             </li>
           </ul>
+
+          {/* Save & Submit info — inline */}
+          <div className="border-t border-shadow-light/40 pt-3 space-y-2">
+            <p className="font-outfit font-extrabold text-xs text-primary">{t.saveInfoTitle}</p>
+            <p className="text-xs text-text-secondary font-inter leading-relaxed">{t.saveInfoBody}</p>
+            <p className="text-[11px] text-text-muted font-inter leading-relaxed">{t.saveInfoSubmitTip}</p>
+          </div>
         </motion.div>
 
         {/* Headphone Recommendation */}
@@ -214,29 +221,6 @@ function LandingContent() {
           className="max-w-md mx-auto"
         >
           <HeadphoneBanner />
-        </motion.div>
-
-        {/* Save & Return info card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.27 }}
-          className="max-w-md mx-auto skeu-inset p-4 rounded-2xl space-y-2.5 border border-primary/10 bg-primary/5"
-        >
-          <p className="font-outfit font-extrabold text-xs text-primary flex items-center gap-1.5">
-            {t.saveInfoTitle}
-          </p>
-          <p className="text-xs text-text-secondary font-inter leading-relaxed">
-            {t.saveInfoBody}
-          </p>
-          <div className="space-y-1.5 pt-1">
-            <p className="text-[11px] text-text-muted font-inter leading-relaxed">
-              {t.saveInfoSaveTip}
-            </p>
-            <p className="text-[11px] text-text-muted font-inter leading-relaxed">
-              {t.saveInfoSubmitTip}
-            </p>
-          </div>
         </motion.div>
 
         {/* Invite Code Verification Panel */}
