@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { SONGS, TOTAL_SONGS, TRACK_ITEMS } from "@/lib/songs";
 import { fetchCloudVotes, generateBatchInviteTokens, fetchAllInviteTokens, clearCloudVotes, InviteTokenRecord } from "@/lib/supabase";
+import { usePollStore } from "@/store/usePollStore";
 
 interface VoteData {
   songId: string;
@@ -339,7 +340,9 @@ export default function AdminDashboard() {
 
   const handleReset = async () => {
     if (confirm("⚠️ Are you sure you want to clear ALL test votes (both Cloud and Local)?")) {
+      usePollStore.getState().resetPoll();
       localStorage.removeItem("worship-poll-state");
+      localStorage.removeItem("local_invite_tokens");
       setAllVotes([]);
       await clearCloudVotes();
       await loadAllVotes();
