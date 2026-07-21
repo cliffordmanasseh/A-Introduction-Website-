@@ -64,8 +64,8 @@ export const translations = {
     // Review Page
     reviewTitle: "ஆடிஷன் முடிந்தது!",
     reviewSub: "அனைத்துப் பாடல்களையும் வெற்றிகரமாக மதிப்பிட்டு முடித்துவிட்டீர்கள்.",
-    reviewEncouragementHeader: "உங்கள் பங்களிப்புக்கு நன்றி!",
-    reviewEncouragementBody: "உங்கள் கருத்துக்கள் எங்கள் பாடலை மேலும் சிறப்பக்கவும், உங்கள் அனுபவத்திற்கு ஏற்ப தனித்துவமாக (personalised) அமைக்கவும் பெரிதும் உதவும்.",
+    reviewEncouragementHeader: "🎵 உங்கள் பங்களிப்பிற்கு மிக்க நன்றி!",
+    reviewEncouragementBody: "உங்கள் கருத்துக்கள் இந்த பாடலை மேலும் தனித்துவமாகவும் (personalised), நமது குடும்பத்தோடு நெருக்கமாக இணைக்கவும் பெரிதும் உதவும்!",
     submitResponsesBtn: "பதில்களைச் சமர்ப்பி",
     submitting: "சமர்ப்பிக்கப்படுகிறது...",
     footerReady: "மறைமுக ஆடிஷன் • பதில் சமர்ப்பிக்கத் தயார்",
