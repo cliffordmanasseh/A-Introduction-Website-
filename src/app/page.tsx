@@ -63,11 +63,12 @@ function LandingContent() {
 
   const checkToken = async (code: string) => {
     if (!code.trim()) return;
+    const cleanCode = code.trim().toUpperCase();
 
     setTokenStatus("verifying");
     setStatusMessage(t.verifying);
 
-    const res = await verifyInviteToken(code);
+    const res = await verifyInviteToken(cleanCode);
 
     if (!res.valid) {
       setTokenStatus("invalid");
@@ -79,10 +80,17 @@ function LandingContent() {
       setInviteToken(null);
     } else {
       setTokenStatus("valid");
-      setInviteToken(code.trim().toUpperCase());
 
-      // Check if user has saved cloud draft progress for this invite code
-      const draft = await fetchDraftProgress(code);
+      // If switching to a different invite token, reset current store session first
+      if (storedToken && storedToken !== cleanCode) {
+        resetPoll();
+        initOrders();
+      }
+
+      setInviteToken(cleanCode);
+
+      // Check if user has saved cloud draft progress specifically for THIS invite code
+      const draft = await fetchDraftProgress(cleanCode);
       if (draft && draft.ratings && Object.keys(draft.ratings).length > 0) {
         Object.entries(draft.ratings).forEach(([segId, score]) => {
           setRating(segId, score);
