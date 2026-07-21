@@ -21,9 +21,12 @@ import {
   Unlock,
   Cloud,
   Loader2,
+  Ticket,
+  Copy,
+  Check,
 } from "lucide-react";
-import { SONGS, TOTAL_SONGS } from "@/lib/songs";
-import { fetchCloudVotes } from "@/lib/supabase";
+import { SONGS, TOTAL_SONGS, TRACK_ITEMS } from "@/lib/songs";
+import { fetchCloudVotes, generateBatchInviteTokens, fetchAllInviteTokens, InviteTokenRecord } from "@/lib/supabase";
 
 interface VoteData {
   songId: string;
@@ -69,20 +72,16 @@ function StatCard({
   );
 }
 
-function ResultBar({
+function RatingResultBar({
   label,
-  votes,
-  total,
-  isWinner,
+  avgScore,
   delay,
 }: {
   label: string;
-  votes: number;
-  total: number;
-  isWinner: boolean;
+  avgScore: number;
   delay: number;
 }) {
-  const percentage = total > 0 ? (votes / total) * 100 : 0;
+  const percentage = (avgScore / 10) * 100;
 
   return (
     <motion.div
@@ -96,20 +95,17 @@ function ResultBar({
           <span className="font-outfit font-bold text-text">
             {label}
           </span>
-          {isWinner && <Trophy className="w-4 h-4 text-accent fill-accent" />}
         </div>
         <span className="text-text-secondary font-inter text-xs font-semibold">
-          {votes} vote{votes !== 1 ? "s" : ""} ({percentage.toFixed(1)}%)
+          <span className="font-outfit font-extrabold text-primary text-base">{avgScore.toFixed(1)}</span> / 10 score
         </span>
       </div>
-      <div className="h-4 skeu-progress-track">
+      <div className="h-3.5 skeu-progress-track">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ delay: delay + 0.15, duration: 0.7, ease: "easeOut" }}
-          className={`h-full rounded-lg ${
-            isWinner ? "bg-gradient-to-r from-accent to-accent-light shadow-sm" : "bg-gradient-to-r from-primary-dark to-primary-light"
-          }`}
+          className="h-full rounded-lg bg-gradient-to-r from-primary-dark to-primary-light"
         />
       </div>
     </motion.div>
@@ -127,16 +123,37 @@ function SongResultCard({
 }) {
   const [showComments, setShowComments] = useState(false);
 
-  const songVotes = allVotes.filter((v) => v.songId === song.id);
-  const totalVotes = songVotes.length;
-  const comments = songVotes.filter((v) => v.comment).map((v) => v.comment!);
+  // Parse scores from comments/records
+  const segmentStats = song.segments.map((seg) => {
+    const records = allVotes.filter((v) => v.segmentId === seg.id || v.songId === seg.id);
+    const scores: number[] = [];
 
-  const segmentVotes = song.segments.map((seg) => ({
-    ...seg,
-    votes: songVotes.filter((v) => v.segmentId === seg.id).length,
-  }));
+    records.forEach((r) => {
+      if (r.comment) {
+        const match = r.comment.match(/Rating:\s*(\d+)\/10/i) || r.comment.match(/Score:\s*(\d+)/i);
+        if (match) {
+          scores.push(parseInt(match[1], 10));
+        }
+      }
+    });
 
-  const maxVotes = Math.max(...segmentVotes.map((s) => s.votes));
+    const totalRatings = scores.length;
+    const avgScore = totalRatings > 0 ? scores.reduce((a, b) => a + b, 0) / totalRatings : 0;
+
+    return {
+      ...seg,
+      avgScore,
+      totalRatings,
+    };
+  });
+
+  const maxAvgScore = Math.max(...segmentStats.map((s) => s.avgScore));
+  const cumulativeScore = segmentStats.reduce((sum, s) => sum + s.avgScore, 0);
+  const totalSubmissions = Math.max(...segmentStats.map((s) => s.totalRatings), 0);
+
+  const comments = allVotes
+    .filter((v) => song.segments.some((s) => s.id === v.segmentId || s.id === v.songId) && v.comment)
+    .map((v) => v.comment!);
 
   return (
     <motion.div
@@ -159,68 +176,32 @@ function SongResultCard({
             {song.artist} &bull; <span className="font-semibold text-primary">{song.language}</span>
           </p>
         </div>
-        <div className="text-right skeu-inset px-4 py-2 rounded-2xl">
-          <p className="text-2xl font-outfit font-extrabold text-primary">
-            {totalVotes}
-          </p>
-          <p className="text-[10px] uppercase font-bold text-text-muted font-inter">Total Votes</p>
+        <div className="flex items-center gap-3">
+          <div className="text-right skeu-inset px-4 py-2 rounded-2xl">
+            <p className="text-2xl font-outfit font-extrabold text-accent">
+              {cumulativeScore.toFixed(1)} <span className="text-xs font-semibold text-text-muted">/ 40</span>
+            </p>
+            <p className="text-[10px] uppercase font-bold text-text-muted font-inter">Cumulative Score</p>
+          </div>
+          <div className="text-right skeu-inset px-3.5 py-2 rounded-2xl">
+            <p className="text-xl font-outfit font-extrabold text-primary">
+              {totalSubmissions}
+            </p>
+            <p className="text-[10px] uppercase font-bold text-text-muted font-inter">Voters</p>
+          </div>
         </div>
       </div>
 
       <div className="space-y-3.5 pt-1">
-        {segmentVotes.map((seg, i) => (
-          <ResultBar
+        {segmentStats.map((seg, i) => (
+          <RatingResultBar
             key={seg.id}
-            label={`${seg.displayLabel} (${seg.audioUrl.split("/").pop()})`}
-            votes={seg.votes}
-            total={totalVotes}
-            isWinner={seg.votes === maxVotes && seg.votes > 0}
+            label={`${seg.displayLabel} (${seg.label})`}
+            avgScore={seg.avgScore}
             delay={0.3 + index * 0.08 + i * 0.04}
           />
         ))}
       </div>
-
-      {totalVotes > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl skeu-inset bg-accent/5 border border-accent/30">
-          <Trophy className="w-4 h-4 text-accent shrink-0" />
-          <span className="text-xs font-outfit font-bold text-text">
-            Crowd Favorite:{" "}
-            <span className="text-accent">
-              {segmentVotes.find((s) => s.votes === maxVotes)?.displayLabel || "N/A"}
-            </span>
-          </span>
-        </div>
-      )}
-
-      {comments.length > 0 && (
-        <div className="pt-1">
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-2 text-xs text-text-secondary hover:text-text font-outfit font-bold transition-colors"
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-primary" />
-            {comments.length} Voter Comment{comments.length !== 1 ? "s" : ""}
-            {showComments ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
-
-          {showComments && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="mt-3 space-y-2"
-            >
-              {comments.map((comment, i) => (
-                <div
-                  key={i}
-                  className="px-4 py-2.5 rounded-xl skeu-inset text-xs text-text-secondary font-inter italic"
-                >
-                  &ldquo;{comment}&rdquo;
-                </div>
-              ))}
-            </motion.div>
-          )}
-        </div>
-      )}
     </motion.div>
   );
 }
@@ -232,6 +213,9 @@ export default function AdminDashboard() {
   const [pollActive, setPollActive] = useState(true);
   const [isLoadingCloud, setIsLoadingCloud] = useState(false);
   const [cloudCount, setCloudCount] = useState(0);
+  const [tokens, setTokens] = useState<InviteTokenRecord[]>([]);
+  const [isGeneratingTokens, setIsGeneratingTokens] = useState(false);
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   useEffect(() => {
     const auth = sessionStorage.getItem("admin-auth");
@@ -241,7 +225,28 @@ export default function AdminDashboard() {
     }
     setIsAuthed(true);
     loadAllVotes();
+    loadTokens();
   }, [router]);
+
+  const loadTokens = async () => {
+    const list = await fetchAllInviteTokens();
+    setTokens(list);
+  };
+
+  const handleGenerateTokens = async (count: number = 10) => {
+    setIsGeneratingTokens(true);
+    await generateBatchInviteTokens(count);
+    await loadTokens();
+    setIsGeneratingTokens(false);
+  };
+
+  const copyInviteLink = (code: string) => {
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const link = `${baseUrl}/?invite=${code}`;
+    navigator.clipboard.writeText(link);
+    setCopiedToken(code);
+    setTimeout(() => setCopiedToken(null), 2000);
+  };
 
   const loadAllVotes = async () => {
     setIsLoadingCloud(true);
@@ -253,9 +258,21 @@ export default function AdminDashboard() {
       if (stored) {
         const parsed = JSON.parse(stored);
         const state = parsed.state || parsed;
-        if (state.votes && state.hasCompleted) {
+        if (state.ratings && state.hasCompleted) {
+          Object.entries(state.ratings).forEach(([segmentId, score]) => {
+            const track = TRACK_ITEMS.find((t) => t.id === segmentId);
+            const key = `${state.sessionId || "local"}_${segmentId}`;
+            votesMap.set(key, {
+              songId: track?.songId || segmentId,
+              segmentId: segmentId as string,
+              sessionId: state.sessionId || "unknown",
+              comment: `Rating: ${score}/10` + (state.comments?.[segmentId] ? ` - ${state.comments[segmentId]}` : ""),
+              timestamp: state.startTime || Date.now(),
+            });
+          });
+        } else if (state.votes && state.hasCompleted) {
           Object.entries(state.votes).forEach(([songId, segmentId]) => {
-            const key = `${state.sessionId || "local"}_${songId}`;
+            const key = `${state.sessionId || "local"}_${segmentId}`;
             votesMap.set(key, {
               songId,
               segmentId: segmentId as string,
@@ -275,8 +292,8 @@ export default function AdminDashboard() {
     setCloudCount(cloudVotes.length);
 
     cloudVotes.forEach((v) => {
-      const key = `${v.sessionId}_${v.songId}`;
-      // Cloud votes take precedence or merge seamlessly
+      // Unique key per segment so ALL 24 variations (A, B, C, D for every song) are counted
+      const key = `${v.sessionId}_${v.segmentId}`;
       votesMap.set(key, {
         songId: v.songId,
         segmentId: v.segmentId,
@@ -443,6 +460,77 @@ export default function AdminDashboard() {
               delay={0.25}
             />
           </div>
+        </section>
+
+        {/* Invite Link Generator & Manager */}
+        <section className="skeu-raised p-6 space-y-4 rounded-3xl">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Ticket className="w-5 h-5 text-primary" />
+              <h2 className="font-outfit font-extrabold text-base text-text text-embossed">
+                One-Time Invite Links ({tokens.filter((t) => !t.isUsed).length} active, {tokens.filter((t) => t.isUsed).length} used)
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleGenerateTokens(50)}
+                disabled={isGeneratingTokens}
+                className="skeu-btn-primary px-4 py-2 text-xs font-outfit font-bold text-white rounded-xl disabled:opacity-50 flex items-center gap-1.5 shadow-md"
+              >
+                {isGeneratingTokens ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "+ Generate 50 Invites"}
+              </button>
+              <button
+                onClick={() => handleGenerateTokens(10)}
+                disabled={isGeneratingTokens}
+                className="skeu-btn px-3 py-2 text-xs font-outfit font-bold text-text-secondary hover:text-text rounded-xl disabled:opacity-50 flex items-center gap-1.5"
+              >
+                + 10
+              </button>
+              {tokens.filter((t) => !t.isUsed).length > 0 && (
+                <button
+                  onClick={() => {
+                    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+                    const activeLinks = tokens
+                      .filter((t) => !t.isUsed)
+                      .map((t) => `${baseUrl}/?invite=${t.token}`)
+                      .join("\n");
+                    navigator.clipboard.writeText(activeLinks);
+                    alert(`Copied ${tokens.filter((t) => !t.isUsed).length} active invite links to clipboard!`);
+                  }}
+                  className="skeu-btn px-3 py-2 text-xs font-outfit font-bold text-primary rounded-xl flex items-center gap-1.5"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy All Links
+                </button>
+              )}
+            </div>
+          </div>
+
+          {tokens.length === 0 ? (
+            <p className="text-xs text-text-muted font-inter">No invite tokens generated yet. Click above to generate batch invite links.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto pr-1">
+              {tokens.map((item) => (
+                <div key={item.id} className="skeu-inset p-3 rounded-xl flex items-center justify-between text-xs font-inter">
+                  <div>
+                    <span className="font-outfit font-bold text-text">{item.token}</span>
+                    <span className={`block text-[10px] ${item.isUsed ? "text-error font-semibold" : "text-success font-semibold"}`}>
+                      {item.isUsed ? "Used" : "Active"}
+                    </span>
+                  </div>
+                  {!item.isUsed && (
+                    <button
+                      onClick={() => copyInviteLink(item.token)}
+                      className="skeu-btn px-2.5 py-1 rounded-lg text-text-secondary hover:text-text flex items-center gap-1 text-[11px] font-outfit font-semibold"
+                    >
+                      {copiedToken === item.token ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3 text-primary" />}
+                      {copiedToken === item.token ? "Copied!" : "Copy Link"}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Un-blinded Results */}

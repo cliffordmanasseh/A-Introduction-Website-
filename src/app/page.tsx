@@ -1,39 +1,82 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  Music2,
-  Headphones,
   ArrowRight,
-  Sparkles,
-  ShieldCheck,
   CheckCircle2,
   RotateCcw,
+  Ticket,
+  AlertCircle,
+  Loader2,
+  HelpCircle,
 } from "lucide-react";
 import { usePollStore } from "@/store/usePollStore";
-import { TOTAL_SONGS } from "@/lib/songs";
 import { ParticleField } from "@/components/effects/Effects";
-import {
-  ParticipationCounter,
-  VoterNumber,
-  HeadphoneBanner,
-} from "@/components/engagement/Engagement";
+import { HeadphoneBanner } from "@/components/engagement/Engagement";
+import { verifyInviteToken } from "@/lib/supabase";
 
-export default function LandingPage() {
+function LandingContent() {
   const router = useRouter();
-  const { hasCompleted, currentStepIndex, votes, initOrders, resetPoll } =
-    usePollStore();
+  const searchParams = useSearchParams();
+  const {
+    hasCompleted,
+    currentStepIndex,
+    ratings,
+    initOrders,
+    resetPoll,
+    setInviteToken,
+    inviteToken: storedToken,
+  } = usePollStore();
+
   const [mounted, setMounted] = useState(false);
-  const [showHeadphoneBanner, setShowHeadphoneBanner] = useState(true);
+  const [tokenInput, setTokenInput] = useState("");
+  const [tokenStatus, setTokenStatus] = useState<"idle" | "verifying" | "valid" | "used" | "invalid">("idle");
+  const [statusMessage, setStatusMessage] = useState("");
+
+  const urlInvite = searchParams.get("invite") || searchParams.get("token");
 
   useEffect(() => {
     setMounted(true);
     initOrders();
   }, [initOrders]);
 
-  const hasStarted = Object.keys(votes).length > 0 && !hasCompleted;
+  // Handle URL invite code or stored invite code
+  useEffect(() => {
+    if (!mounted) return;
+
+    const tokenToTest = urlInvite || storedToken;
+    if (tokenToTest) {
+      setTokenInput(tokenToTest);
+      checkToken(tokenToTest);
+    }
+  }, [mounted, urlInvite]);
+
+  const checkToken = async (code: string) => {
+    if (!code.trim()) return;
+
+    setTokenStatus("verifying");
+    setStatusMessage("சரிபார்க்கப்படுகிறது...");
+
+    const res = await verifyInviteToken(code);
+
+    if (!res.valid) {
+      setTokenStatus("invalid");
+      setStatusMessage("தவறான அழைப்பு குறியீடு. இணைப்பைச் சரிபார்க்கவும்.");
+      setInviteToken(null);
+    } else if (res.isUsed) {
+      setTokenStatus("used");
+      setStatusMessage("இந்த அழைப்பு இணைப்பு ஏற்கனவே பயன்படுத்தப்பட்டுள்ளது.");
+      setInviteToken(null);
+    } else {
+      setTokenStatus("valid");
+      setStatusMessage("செல்லுபடியாகும் அழைப்பு குறியீடு!");
+      setInviteToken(code.trim().toUpperCase());
+    }
+  };
+
+  const hasStarted = Object.keys(ratings).length > 0 && !hasCompleted;
 
   const handleStart = () => {
     initOrders();
@@ -46,7 +89,7 @@ export default function LandingPage() {
   };
 
   const handleStartOver = () => {
-    if (confirm("Reset your current progress and begin a new blind session?")) {
+    if (confirm("உங்கள் தற்போதைய முன்னேற்றத்தை மீட்டமைத்து புதிய அமர்வைத் தொடங்கவா?")) {
       resetPoll();
       initOrders();
       router.push("/poll/1");
@@ -63,74 +106,128 @@ export default function LandingPage() {
     );
   }
 
+  const isTokenRequired = true;
+  const canProceed = !isTokenRequired || tokenStatus === "valid" || hasStarted || hasCompleted;
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-between px-4 md:px-8 py-10 relative bg-base">
       <ParticleField count={20} />
 
-      {/* Top Bar / Badge */}
-      <header className="w-full max-w-3xl flex items-center justify-between z-10">
-        <div className="flex items-center gap-2.5 skeu-raised px-4 py-2 rounded-2xl">
-          <div className="w-8 h-8 rounded-xl skeu-circle-primary flex items-center justify-center">
-            <Music2 className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-outfit font-bold text-sm text-text">Blind Test Session</span>
-        </div>
-        <VoterNumber number={142} />
-      </header>
-
       {/* Hero Section */}
       <main className="max-w-2xl w-full text-center space-y-8 my-auto py-8 z-10">
-        {/* Main Icon */}
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, type: "spring" }}
-          className="mx-auto w-24 h-24 rounded-3xl skeu-raised flex items-center justify-center p-2"
-        >
-          <div className="w-full h-full rounded-2xl skeu-inset flex items-center justify-center bg-gradient-to-tr from-primary-light/20 to-primary/10">
-            <Headphones className="w-10 h-10 text-primary" />
-          </div>
-        </motion.div>
-
         {/* Title & Description */}
-        <div className="space-y-3 px-2">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full skeu-inset text-xs font-semibold text-primary uppercase tracking-wider mb-1"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            100% Unbiased Listening Test
-          </motion.div>
+        <div className="space-y-4 px-2">
           <motion.h1
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="text-4xl md:text-5xl font-outfit font-extrabold text-text text-embossed tracking-tight leading-tight"
+            className="text-3xl md:text-4xl font-outfit font-extrabold text-text text-embossed tracking-tight leading-snug"
           >
-            Worship Music <br className="hidden sm:block" />
-            <span className="gradient-text">Blind Audition</span>
+            வணக்கம்! <span className="gradient-text">நமது குடும்பப் பாடலை இணைந்து உருவாக்குவோம்! 🎵</span>
           </motion.h1>
+
           <motion.p
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="text-text-secondary font-inter text-base md:text-lg max-w-xl mx-auto leading-relaxed"
           >
-            All song titles, artists, and languages are hidden. Listen purely to the instrumentation and arrangement, compare 4 variations per track, and vote for the version that moves your spirit.
+            இந்தப் பாடலுக்கு எந்த வகையான இசை ட்யூன் சரியாக இருக்கும் என்பதைத் தீர்மானிக்க உங்கள் உதவி தேவை. கீழே உள்ள வாக்கெடுப்பில் உங்கள் விருப்பமான இசை அமைப்பைத் தேர்ந்தெடுங்கள்!
           </motion.p>
         </div>
 
+        {/* How to do the experiment */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.23 }}
+          className="skeu-raised p-6 space-y-3.5 rounded-3xl text-left max-w-md mx-auto"
+        >
+          <h2 className="font-outfit font-extrabold text-sm text-text text-embossed flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-primary" />
+            பங்கேற்பது எப்படி?
+          </h2>
+          <ul className="space-y-2.5 text-xs text-text-secondary font-inter leading-relaxed">
+            <li className="flex items-start gap-2">
+              <span className="font-bold text-primary shrink-0">1.</span>
+              <span><strong className="text-text font-semibold">ஹெட்ஃபோன் அணியவும்:</strong> சிறந்த இசை அனுபவத்தைப் பெற ஹெட்ஃபோன் பயன்படுத்தவும்.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="font-bold text-primary shrink-0">2.</span>
+              <span><strong className="text-text font-semibold">இசையைக் கேட்கவும்:</strong> பிளே பொத்தானைத் தட்டி இசையைக் கேட்கவும்.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="font-bold text-primary shrink-0">3.</span>
+              <span><strong className="text-text font-semibold">மதிப்பிடவும்:</strong> இந்தப் பாடலை நீங்கள் பாட விரும்பும் அளவை 0 முதல் 10 வரை தேர்வு செய்யவும்.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="font-bold text-primary shrink-0">4.</span>
+              <span><strong className="text-text font-semibold">அடுத்த பாடல்:</strong> மதிப்பிட்ட பின் &apos;அடுத்தது&apos; பொத்தானைக் கிளிக் செய்யவும்.</span>
+            </li>
+          </ul>
+        </motion.div>
+
         {/* Headphone Recommendation */}
-        {showHeadphoneBanner && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.25 }}
+          className="max-w-md mx-auto"
+        >
+          <HeadphoneBanner />
+        </motion.div>
+
+        {/* Invite Code Verification Panel */}
+        {!hasCompleted && !hasStarted && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.25 }}
-            className="max-w-md mx-auto"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28 }}
+            className="max-w-md mx-auto skeu-raised p-5 space-y-3 rounded-2xl"
           >
-            <HeadphoneBanner onDismiss={() => setShowHeadphoneBanner(false)} />
+            <div className="flex items-center gap-2 text-sm font-outfit font-bold text-text">
+              <Ticket className="w-4 h-4 text-primary" />
+              அழைப்பு குறியீடு / இணைப்பு
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={tokenInput}
+                onChange={(e) => {
+                  setTokenInput(e.target.value);
+                  setTokenStatus("idle");
+                  setStatusMessage("");
+                }}
+                placeholder="அழைப்பு குறியீட்டை உள்ளிடவும் (எ.கா: AUDITION-XXXX)"
+                className="flex-1 px-4 py-2.5 rounded-xl skeu-inset text-text placeholder:text-text-muted font-inter text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase tracking-wider"
+              />
+              <button
+                onClick={() => checkToken(tokenInput)}
+                disabled={!tokenInput.trim() || tokenStatus === "verifying"}
+                className="skeu-btn-primary px-4 py-2.5 text-xs font-outfit font-bold text-white rounded-xl disabled:opacity-50"
+              >
+                {tokenStatus === "verifying" ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "சரிபார்"
+                )}
+              </button>
+            </div>
+
+            {tokenStatus === "valid" && (
+              <p className="text-xs text-success font-inter font-semibold flex items-center justify-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {statusMessage}
+              </p>
+            )}
+
+            {(tokenStatus === "used" || tokenStatus === "invalid") && (
+              <p className="text-xs text-error font-inter font-semibold flex items-center justify-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" />
+                {statusMessage}
+              </p>
+            )}
           </motion.div>
         )}
 
@@ -147,7 +244,7 @@ export default function LandingPage() {
               className="w-full sm:w-auto px-8 py-4 skeu-btn-primary font-outfit font-bold text-base flex items-center justify-center gap-3"
             >
               <CheckCircle2 className="w-5 h-5" />
-              View Your Completed Receipt
+              உங்கள் ரசீதைப் பார்க்கவும்
             </button>
           ) : hasStarted ? (
             <>
@@ -155,87 +252,57 @@ export default function LandingPage() {
                 onClick={handleResume}
                 className="w-full sm:flex-1 py-4 px-6 skeu-btn-primary font-outfit font-bold text-base flex items-center justify-center gap-2"
               >
-                Resume Track #{currentStepIndex + 1}
+                தொடரவும் - பாடல் #{currentStepIndex + 1}
                 <ArrowRight className="w-5 h-5" />
               </button>
               <button
                 onClick={handleStartOver}
                 className="w-full sm:w-auto py-4 px-5 skeu-btn text-text-secondary font-outfit font-semibold text-sm flex items-center justify-center gap-2"
-                title="Start from Track #1"
+                title="மீட்டமை"
               >
                 <RotateCcw className="w-4 h-4" />
-                Reset
+                மீட்டமை
               </button>
             </>
           ) : (
             <button
               onClick={handleStart}
-              className="w-full sm:w-auto px-10 py-4 skeu-btn-primary font-outfit font-bold text-lg flex items-center justify-center gap-3 group"
+              disabled={!canProceed}
+              className={`w-full sm:w-auto px-10 py-4 font-outfit font-bold text-lg flex items-center justify-center gap-3 group transition-all rounded-2xl
+                ${
+                  canProceed
+                    ? "skeu-btn-primary text-white hover:scale-105 active:scale-95 shadow-xl"
+                    : "skeu-inset text-text-muted cursor-not-allowed opacity-50"
+                }
+              `}
             >
-              Start Blind Audition
+              வாக்கெடுப்பைத் தொடங்குங்கள்
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </button>
           )}
-        </motion.div>
-
-        {/* Participation Counter */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <ParticipationCounter count={141} />
-        </motion.div>
-
-        {/* How It Works (3D raised cards) */}
-        <motion.div
-          initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
-          className="pt-6"
-        >
-          <div className="flex items-center justify-center gap-2 text-xs font-outfit font-bold text-text-muted uppercase tracking-widest mb-6">
-            <ShieldCheck className="w-4 h-4 text-primary" />
-            How Blind Voting Works
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-            {[
-              {
-                step: "01",
-                title: "Listen Blindly",
-                desc: `We present ${TOTAL_SONGS} mystery tracks in random order. Each track has 4 unique arrangements.`,
-              },
-              {
-                step: "02",
-                title: "Compare & Feel",
-                desc: "Listen for at least 5 seconds to each variation without knowing the singer or language.",
-              },
-              {
-                step: "03",
-                title: "Cast Unbiased Vote",
-                desc: "Pick your favorite version for all 6 tracks and earn physical badges for your listening style.",
-              },
-            ].map((item, i) => (
-              <div key={item.step} className="skeu-raised p-5 space-y-2 relative overflow-hidden">
-                <span className="font-outfit font-extrabold text-2xl text-primary/30 absolute top-3 right-4 select-none">
-                  {item.step}
-                </span>
-                <h3 className="font-outfit font-bold text-text text-base pt-1">
-                  {item.title}
-                </h3>
-                <p className="text-xs text-text-secondary font-inter leading-relaxed">
-                  {item.desc}
-                </p>
-              </div>
-            ))}
-          </div>
         </motion.div>
       </main>
 
       {/* Footer */}
       <footer className="w-full text-center py-4 z-10 font-inter text-xs text-text-muted">
-        Tactile Skeuomorphic Day Theme &bull; Blind Listening Engine &bull; ~10 mins
+        ஆராதனை பாடல் ஆடிஷன் &bull; அழைப்பு மூலம் மட்டுமே
       </footer>
     </div>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-base">
+          <div className="w-12 h-12 rounded-full skeu-inset flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        </div>
+      }
+    >
+      <LandingContent />
+    </Suspense>
   );
 }

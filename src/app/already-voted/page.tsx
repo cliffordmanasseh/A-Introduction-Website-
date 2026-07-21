@@ -24,35 +24,46 @@ export default function AlreadyVotedPage() {
         <div className="space-y-2">
           <div className="inline-flex items-center gap-1.5 skeu-inset px-3 py-1 rounded-full text-xs font-semibold text-primary uppercase tracking-wider">
             <ShieldCheck className="w-3.5 h-3.5" />
-            Session Sealed
+            அமர்வு முடிந்தது
           </div>
           <h1 className="text-3xl font-outfit font-extrabold text-text text-embossed">
-            Welcome Back! 👋
+            மீண்டும் வருக! 👋
           </h1>
           <p className="text-text-secondary font-inter text-sm md:text-base leading-relaxed">
-            You&apos;ve already completed and submitted your blind musical audition. Thank you for your heartfelt contributions!
+            நீங்கள் ஏற்கனவே உங்கள் மறைமுக இசை ஆடிஷனை முடித்துச் சமர்ப்பித்துவிட்டீர்கள். உங்கள் பங்களிப்பிற்கு மிக்க நன்றி!
           </p>
         </div>
 
         {/* Info Card */}
         <div className="skeu-raised p-5 text-sm text-text-secondary font-inter space-y-2 rounded-2xl">
           <p className="font-semibold text-text">
-            Why can&apos;t I vote again?
+            ஏன் மீண்டும் வாக்களிக்க முடியாது?
           </p>
           <p className="text-xs text-text-muted leading-relaxed">
-            To preserve the integrity and statistical accuracy of the blind listening test, each device is permitted to submit one complete ballot.
+            துல்லியமான முடிவுகளை உறுதி செய்ய, ஒரு சாதனத்திற்கு ஒரு முறை மட்டுமே சமர்ப்பிக்க அனுமதிக்கப்படுகிறது.
           </p>
         </div>
 
-        {/* Back link */}
-        <div className="pt-2">
+        {/* Back & Reset links */}
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="/"
-            className="skeu-btn px-6 py-3 inline-flex items-center gap-2 text-sm font-outfit font-bold text-text-secondary hover:text-text transition-colors"
+            className="skeu-btn px-6 py-3 inline-flex items-center gap-2 text-sm font-outfit font-bold text-text-secondary hover:text-text transition-colors w-full sm:w-auto justify-center"
           >
             <ArrowLeft className="w-4 h-4" />
-            Return to Landing Page
+            முகப்புப் பக்கத்திற்குத் திரும்பு
           </Link>
+          <button
+            onClick={() => {
+              if (confirm("சோதனைக்காக உங்கள் அமர்வை மீட்டமைக்கவா? (Reset test session?)")) {
+                localStorage.removeItem("worship-poll-state");
+                window.location.href = "/";
+              }
+            }}
+            className="skeu-btn px-4 py-3 inline-flex items-center gap-1.5 text-xs font-outfit font-semibold text-error/80 hover:text-error transition-colors w-full sm:w-auto justify-center"
+          >
+            🔄 Reset Test Session
+          </button>
         </div>
       </motion.div>
     </div>

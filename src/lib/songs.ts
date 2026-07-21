@@ -98,6 +98,38 @@ export const SEGMENTS_PER_SONG = 4;
 export const LISTEN_GATE_SECONDS = 5; // Must listen 5s per segment before voting
 export const ADMIN_PASSWORD = 'worship2026';
 
+export interface TrackItem {
+  id: string;
+  songId: string;
+  label: string;
+  songNumber: number;
+  variationLabel: 'A' | 'B' | 'C' | 'D';
+  audioUrl: string;
+  title: string;
+}
+
+// Sequence: 1A, 2A, 3A, 4A, 5A, 6A, 1B, 2B, 3B, 4B, 5B, 6B, 1C, 2C, 3C, 4C, 5C, 6C, 1D, 2D, 3D, 4D, 5D, 6D
+export const TRACK_ITEMS: TrackItem[] = (['A', 'B', 'C', 'D'] as const).flatMap((label) =>
+  SONGS.map((song) => {
+    const seg = song.segments.find((s) => s.label === label)!;
+    return {
+      id: seg.id,
+      songId: song.id,
+      label: `${song.number}${label}`,
+      songNumber: song.number,
+      variationLabel: label,
+      audioUrl: seg.audioUrl,
+      title: song.title,
+    };
+  })
+);
+
+export const TOTAL_TRACKS = TRACK_ITEMS.length;
+
+export function getTrackItemByIndex(index: number): TrackItem | undefined {
+  return TRACK_ITEMS[index];
+}
+
 export function getSongByNumber(num: number): Song | undefined {
   return SONGS.find((s) => s.number === num);
 }

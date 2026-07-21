@@ -29,3 +29,29 @@ CREATE POLICY "Allow public insert to blind_votes" ON blind_votes
 CREATE POLICY "Allow public select from blind_votes" ON blind_votes
   FOR SELECT TO anon, authenticated
   USING (true);
+
+-- =================================================================
+-- Invite Tokens Schema
+-- =================================================================
+
+CREATE TABLE IF NOT EXISTS invite_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  token TEXT UNIQUE NOT NULL,
+  is_used BOOLEAN DEFAULT FALSE,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_invite_tokens_token ON invite_tokens(token);
+
+ALTER TABLE invite_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public select from invite_tokens" ON invite_tokens
+  FOR SELECT TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "Allow public update/insert to invite_tokens" ON invite_tokens
+  FOR ALL TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);
+

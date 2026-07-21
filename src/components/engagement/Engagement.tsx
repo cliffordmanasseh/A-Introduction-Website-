@@ -123,32 +123,19 @@ export function VoteReceipt({
 }
 
 // Headphone recommendation banner
-export function HeadphoneBanner({
-  onDismiss,
-}: {
-  onDismiss?: () => void;
-}) {
+export function HeadphoneBanner() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className="skeu-inset p-4 rounded-2xl flex items-center gap-3 border border-shadow-light/50"
+      className="skeu-inset p-4 rounded-2xl flex items-center justify-center gap-3 border border-shadow-light/50"
     >
       <div className="w-10 h-10 rounded-xl skeu-raised flex items-center justify-center text-primary shrink-0">
         <Headphones className="w-5 h-5" />
       </div>
-      <span className="text-text text-sm font-inter font-medium flex-1">
-        For the truest blind test comparison, wear headphones 🎧
+      <span className="text-text text-sm font-inter font-medium">
+        ஹெட்ஃபோன் அணியவும் 🎧
       </span>
-      {onDismiss && (
-        <button
-          onClick={onDismiss}
-          className="skeu-btn px-3 py-1.5 text-xs text-text-secondary font-semibold hover:text-text transition-colors"
-        >
-          Got it
-        </button>
-      )}
     </motion.div>
   );
 }

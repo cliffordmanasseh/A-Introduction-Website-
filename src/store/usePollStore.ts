@@ -1,20 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { SONGS, shuffleSegments, shuffleSongs } from '@/lib/songs';
+import { SONGS, TRACK_ITEMS, TOTAL_TRACKS, shuffleSegments, shuffleSongs } from '@/lib/songs';
 import type { Segment } from '@/types';
 
 interface PollStore {
   // Session
   sessionId: string;
   voterName: string;
+  inviteToken: string | null;
   isReturningVoter: boolean;
   hasCompleted: boolean;
   startTime: number | null;
 
   // Voting state
-  currentStepIndex: number; // 0 to TOTAL_SONGS - 1
+  currentStepIndex: number; // 0 to TOTAL_TRACKS - 1
   songOrder: string[]; // Randomized songId order
   votes: Record<string, string>; // songId → segmentId
+  ratings: Record<string, number>; // segmentId → score 0..10
   comments: Record<string, string>; // songId → comment text
   listenedSegments: Record<string, string[]>; // songId → listened segment IDs
   listenDurations: Record<string, number>; // segmentId → total ms listened
@@ -23,10 +25,12 @@ interface PollStore {
   // Actions
   setVoterName: (name: string) => void;
   setSessionId: (id: string) => void;
+  setInviteToken: (token: string | null) => void;
   initOrders: () => void;
   markSegmentListened: (songId: string, segmentId: string) => void;
   addListenDuration: (segmentId: string, ms: number) => void;
   castVote: (songId: string, segmentId: string) => void;
+  setRating: (segmentId: string, rating: number) => void;
   setComment: (songId: string, comment: string) => void;
   goToNextStep: () => void;
   goToPrevStep: () => void;
@@ -53,12 +57,14 @@ export const usePollStore = create<PollStore>()(
     (set, get) => ({
       sessionId: '',
       voterName: '',
+      inviteToken: null,
       isReturningVoter: false,
       hasCompleted: false,
       startTime: null,
       currentStepIndex: 0,
       songOrder: [],
       votes: {},
+      ratings: {},
       comments: {},
       listenedSegments: {},
       listenDurations: {},
@@ -67,6 +73,8 @@ export const usePollStore = create<PollStore>()(
       setVoterName: (name) => set({ voterName: name }),
 
       setSessionId: (id) => set({ sessionId: id }),
+
+      setInviteToken: (token) => set({ inviteToken: token }),
 
       initOrders: () => {
         const state = get();
@@ -111,6 +119,11 @@ export const usePollStore = create<PollStore>()(
           votes: { ...state.votes, [songId]: segmentId },
         })),
 
+      setRating: (segmentId, rating) =>
+        set((state) => ({
+          ratings: { ...state.ratings, [segmentId]: rating },
+        })),
+
       setComment: (songId, comment) =>
         set((state) => ({
           comments: { ...state.comments, [songId]: comment },
@@ -118,7 +131,7 @@ export const usePollStore = create<PollStore>()(
 
       goToNextStep: () =>
         set((state) => ({
-          currentStepIndex: Math.min(state.currentStepIndex + 1, SONGS.length - 1),
+          currentStepIndex: Math.min(state.currentStepIndex + 1, TOTAL_TRACKS - 1),
         })),
 
       goToPrevStep: () =>
@@ -135,6 +148,7 @@ export const usePollStore = create<PollStore>()(
           currentStepIndex: 0,
           songOrder: shuffleSongs(SONGS),
           votes: {},
+          ratings: {},
           comments: {},
           listenedSegments: {},
           listenDurations: {},
@@ -148,6 +162,7 @@ export const usePollStore = create<PollStore>()(
           hasCompleted: false,
           startTime: null,
           voterName: '',
+          inviteToken: null,
           sessionId: generateSessionId(),
           isReturningVoter: false,
         }),
