@@ -18,6 +18,8 @@ import { useLanguageStore } from "@/store/useLanguageStore";
 import { translations } from "@/lib/translations";
 import { LanguageToggle } from "@/components/common/LanguageToggle";
 
+import { useEffect, useState } from "react";
+
 export default function ReviewPage() {
   const router = useRouter();
   const { language } = useLanguageStore();
@@ -28,10 +30,13 @@ export default function ReviewPage() {
   const { stopAll } = useAudioStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (hasCompleted) {
-    router.push("/already-voted");
-    return null;
-  }
+  useEffect(() => {
+    if (hasCompleted) {
+      router.push("/thank-you");
+      return;
+    }
+    handleSubmit();
+  }, []);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);

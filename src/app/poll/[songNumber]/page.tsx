@@ -23,7 +23,7 @@ import { CompletionBar } from "@/components/poll/CompletionBar";
 import { useLanguageStore } from "@/store/useLanguageStore";
 import { translations } from "@/lib/translations";
 import { LanguageToggle } from "@/components/common/LanguageToggle";
-import { saveDraftProgress } from "@/lib/supabase";
+import { saveDraftProgress, submitCloudBallot, consumeInviteToken } from "@/lib/supabase";
 
 export default function PollPage({
   params,
@@ -45,10 +45,13 @@ export default function PollPage({
     ratings,
     currentStepIndex,
     sessionId,
+    voterName,
+    comments,
     inviteToken,
     initOrders,
     setRating,
     goToStep,
+    markCompleted,
     hasCompleted,
   } = usePollStore();
   const { stopAll, togglePlay, currentSegmentId, isPlaying } = useAudioStore();
@@ -110,14 +113,33 @@ export default function PollPage({
     setShowSaveModal(true);
   };
 
-  const handleNext = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleNext = async () => {
     stopAll();
-    // Ensure current rating is set if not edited
+    const finalScore = ratings[trackItem.id] ?? 5;
     if (ratings[trackItem.id] === undefined) {
-      setRating(trackItem.id, 5);
+      setRating(trackItem.id, finalScore);
     }
+
     if (isLastTrack) {
-      router.push("/review");
+      setIsSubmitting(true);
+      const allRatings = { ...ratings, [trackItem.id]: finalScore };
+
+      if (inviteToken) {
+        await consumeInviteToken(inviteToken);
+      }
+
+      await submitCloudBallot({
+        sessionId: sessionId || "anon-session",
+        voterName: voterName || "Anonymous Voter",
+        ratings: allRatings,
+        comments,
+      });
+
+      markCompleted();
+      setIsSubmitting(false);
+      router.push("/thank-you");
     } else {
       router.push(`/poll/${stepNum + 1}`);
     }
