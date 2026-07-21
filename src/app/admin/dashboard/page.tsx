@@ -24,6 +24,7 @@ import {
   Ticket,
   Copy,
   Check,
+  AlertCircle,
 } from "lucide-react";
 import { SONGS, TOTAL_SONGS, TRACK_ITEMS } from "@/lib/songs";
 import { fetchCloudVotes, generateBatchInviteTokens, fetchAllInviteTokens, clearCloudVotes, InviteTokenRecord } from "@/lib/supabase";
@@ -514,13 +515,23 @@ export default function AdminDashboard() {
           {tokens.length === 0 ? (
             <p className="text-xs text-text-muted font-inter">No invite tokens generated yet. Click above to generate batch invite links.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
               {tokens.map((item) => (
                 <div key={item.id} className="skeu-inset p-3 rounded-xl flex items-center justify-between text-xs font-inter">
                   <div>
                     <span className="font-outfit font-bold text-text">{item.token}</span>
-                    <span className={`block text-[10px] ${item.isUsed ? "text-error font-semibold" : "text-success font-semibold"}`}>
-                      {item.isUsed ? "Used" : "Active"}
+                    <span className={`block text-[10px] font-semibold ${
+                      item.isUsed
+                        ? "text-success"
+                        : (item as any).accessedAt
+                        ? "text-amber-500"
+                        : "text-text-muted"
+                    }`}>
+                      {item.isUsed
+                        ? `✅ Submitted ${item.usedAt ? new Date(item.usedAt).toLocaleDateString() : ""}`
+                        : (item as any).accessedAt
+                        ? `⏳ Started — not submitted`
+                        : "⬜ Not yet opened"}
                     </span>
                   </div>
                   {!item.isUsed && (
@@ -534,6 +545,34 @@ export default function AdminDashboard() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+          {/* Pending Follow-up: accessed but not submitted */}
+          {tokens.filter((t) => !t.isUsed && (t as any).accessedAt).length > 0 && (
+            <div className="border-t border-shadow-light/40 pt-4 space-y-2">
+              <p className="text-xs font-outfit font-extrabold text-amber-500 flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4" />
+                Pending Follow-up — Started but not submitted ({tokens.filter((t) => !t.isUsed && (t as any).accessedAt).length})
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
+                {tokens.filter((t) => !t.isUsed && (t as any).accessedAt).map((item) => (
+                  <div key={item.id} className="skeu-inset p-2.5 rounded-xl flex items-center justify-between text-xs font-inter border border-amber-500/20">
+                    <div>
+                      <span className="font-outfit font-bold text-text">{item.token}</span>
+                      <span className="block text-[10px] text-amber-500">
+                        Opened {(item as any).accessedAt ? new Date((item as any).accessedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => copyInviteLink(item.token)}
+                      className="skeu-btn px-2 py-1 rounded-lg text-text-secondary hover:text-text flex items-center gap-1 text-[11px] font-outfit font-semibold"
+                    >
+                      {copiedToken === item.token ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3 text-primary" />}
+                      {copiedToken === item.token ? "Copied!" : "Resend"}
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>

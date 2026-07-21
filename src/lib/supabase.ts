@@ -129,6 +129,7 @@ export interface InviteTokenRecord {
   token: string;
   isUsed: boolean;
   usedAt?: string;
+  accessedAt?: string;
   createdAt: string;
 }
 
@@ -267,6 +268,7 @@ export async function fetchAllInviteTokens(): Promise<InviteTokenRecord[]> {
           token: row.token,
           isUsed: !!row.is_used,
           usedAt: row.used_at || undefined,
+          accessedAt: row.accessed_at || undefined,
           createdAt: row.created_at,
         });
       });
