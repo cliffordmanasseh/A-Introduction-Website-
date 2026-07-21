@@ -18,6 +18,12 @@ export const translations = {
     step2: "இசையைக் கேட்கவும்: பிளே பொத்தானைத் தட்டி இசையைக் கேட்கவும்.",
     step3: "மதிப்பிடவும்: இந்தப் பாடலை நீங்கள் பாட விரும்பும் அளவை 0 முதல் 10 வரை தேர்வு செய்யவும்.",
     step4: "அடுத்த பாடல்: மதிப்பிட்ட பின் 'அடுத்தது' பொத்தானைக் கிளிக் செய்யவும்.",
+
+    // Save vs Submit info
+    saveInfoTitle: "💾 சேமிக்க & பிறகு திரும்பலாம்!",
+    saveInfoBody: "24 பாடல்களும் நீண்டதாக இருக்கும் — வேண்டுமென்றால் நடுவிலே நிறுத்திவிட்டு பிறகு திரும்பி வரலாம்.",
+    saveInfoSaveTip: "💾 சேமிக்க பொத்தான்: உங்கள் முன்னேற்றத்தை மட்டும் சேமிக்கும். நீங்கள் பிறகு திரும்பி தொடரலாம். உங்கள் பதில்கள் இன்னும் சமர்ப்பிக்கப்படவில்லை.",
+    saveInfoSubmitTip: "✅ சமர்ப்பிக்க பொத்தான்: கடைசி பாடலில் கிளிக் செய்தால் உங்கள் அனைத்து பதில்களும் உடனடியாக சமர்ப்பிக்கப்படும். இதை செய்த பிறகு மாற்ற முடியாது!",
     invitePrompt: "அழைப்பு குறியீடு / இணைப்பு",
     invitePlaceholder: "அழைப்பு குறியீட்டை உள்ளிடவும் (எ.கா: AUDITION-XXXX)",
     verifyBtn: "சரிபார்",
@@ -97,6 +103,12 @@ export const translations = {
     step2: "Listen to Audio: Tap the play button to listen to each arrangement.",
     step3: "Rate: Choose a score from 0 to 10 based on how much you'd like to sing it.",
     step4: "Next Song: Click 'Next' after submitting your rating.",
+
+    // Save vs Submit info
+    saveInfoTitle: "💾 Save & Come Back Later!",
+    saveInfoBody: "24 songs can take a while — feel free to pause and return anytime to continue where you left off.",
+    saveInfoSaveTip: "💾 Save button: Only saves your progress so far. Your responses are NOT submitted yet — you can return later to continue.",
+    saveInfoSubmitTip: "✅ Submit button: On the last song, clicking this immediately submits ALL your responses. This cannot be undone!",
     invitePrompt: "Invite Code / Link",
     invitePlaceholder: "Enter invite code (e.g. AUDITION-XXXX)",
     verifyBtn: "Verify",
