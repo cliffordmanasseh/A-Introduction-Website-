@@ -15,7 +15,7 @@ import {
 import { usePollStore } from "@/store/usePollStore";
 import { ParticleField } from "@/components/effects/Effects";
 import { HeadphoneBanner } from "@/components/engagement/Engagement";
-import { verifyInviteToken } from "@/lib/supabase";
+import { verifyInviteToken, fetchDraftProgress } from "@/lib/supabase";
 
 function LandingContent() {
   const router = useRouter();
@@ -27,6 +27,8 @@ function LandingContent() {
     initOrders,
     resetPoll,
     setInviteToken,
+    setRating,
+    goToStep,
     inviteToken: storedToken,
   } = usePollStore();
 
@@ -71,8 +73,21 @@ function LandingContent() {
       setInviteToken(null);
     } else {
       setTokenStatus("valid");
-      setStatusMessage("செல்லுபடியாகும் அழைப்பு குறியீடு!");
       setInviteToken(code.trim().toUpperCase());
+
+      // Check if user has saved cloud draft progress for this invite code
+      const draft = await fetchDraftProgress(code);
+      if (draft && draft.ratings && Object.keys(draft.ratings).length > 0) {
+        Object.entries(draft.ratings).forEach(([segId, score]) => {
+          setRating(segId, score);
+        });
+        if (typeof draft.currentStepIndex === "number") {
+          goToStep(draft.currentStepIndex);
+        }
+        setStatusMessage(`அழைப்பு குறியீடு சரிபார்க்கப்பட்டது! (முன்னேற்றம் மீட்டமைக்கப்பட்டது: ${Object.keys(draft.ratings).length} பாடல்கள்)`);
+      } else {
+        setStatusMessage("செல்லுபடியாகும் அழைப்பு குறியீடு!");
+      }
     }
   };
 

@@ -77,10 +77,20 @@ export default function ThankYouPage() {
               {ratedCount} / {TOTAL_TRACKS}
             </p>
           </div>
+
+          {/* Warm Personalised Connection Message */}
+          <div className="skeu-inset p-4 rounded-2xl text-left bg-gradient-to-r from-primary/10 to-indigo-500/10 space-y-1.5 border border-primary/10">
+            <p className="text-xs font-outfit font-extrabold text-primary flex items-center gap-1.5">
+              🎵 உங்கள் பங்களிப்பிற்கு மிக்க நன்றி!
+            </p>
+            <p className="text-xs text-text-secondary font-inter leading-relaxed">
+              உங்கள் கருத்துக்கள் இந்த பாடலை மேலும் தனித்துவமாகவும் (personalised), நமது குடும்பத்தோடு நெருக்கமாக இணைக்கவும் பெரிதும் உதவும்!
+            </p>
+          </div>
         </motion.div>
 
         <p className="text-xs text-text-muted font-inter italic">
-          &ldquo;சிறந்த ஆராதனை இசை அமைப்புகளைத் தேர்ந்தெடுக்க எங்களுக்கு உதவியதற்கு நன்றி.&rdquo;
+          &ldquo;சிறந்த ஆராதனை இசை அமைப்புகளைத் தேர்ந்தெடுக்க எங்களுக்கு உதவியதற்கு மனமார்ந்த நன்றி.&rdquo;
         </p>
       </motion.div>
     </div>

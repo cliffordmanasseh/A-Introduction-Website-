@@ -269,3 +269,100 @@ export async function fetchAllInviteTokens(): Promise<InviteTokenRecord[]> {
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
+
+export interface DraftProgressData {
+  sessionId: string;
+  inviteToken?: string | null;
+  currentStepIndex: number;
+  ratings: Record<string, number>;
+  updatedAt: string;
+}
+
+/**
+ * Saves or updates user's draft ratings in Supabase cloud (or local fallback).
+ */
+export async function saveDraftProgress({
+  sessionId,
+  inviteToken,
+  currentStepIndex,
+  ratings,
+}: {
+  sessionId: string;
+  inviteToken?: string | null;
+  currentStepIndex: number;
+  ratings: Record<string, number>;
+}): Promise<boolean> {
+  const payload = {
+    session_id: sessionId,
+    invite_token: inviteToken || null,
+    current_step_index: currentStepIndex,
+    ratings_json: JSON.stringify(ratings),
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    const { error } = await supabase
+      .from("poll_drafts")
+      .upsert(payload, { onConflict: "session_id" });
+
+    if (error) {
+      console.warn("Cloud draft save warning:", error.message);
+    }
+  } catch (err: any) {
+    console.warn("Cloud draft save notice:", err?.message);
+  }
+
+  // Backup to localStorage
+  try {
+    localStorage.setItem(
+      `draft_${inviteToken || sessionId}`,
+      JSON.stringify({
+        sessionId,
+        inviteToken,
+        currentStepIndex,
+        ratings,
+        updatedAt: payload.updated_at,
+      })
+    );
+  } catch {}
+
+  return true;
+}
+
+/**
+ * Fetches saved draft progress by invite token or session ID.
+ */
+export async function fetchDraftProgress(
+  identifier: string
+): Promise<DraftProgressData | null> {
+  const cleanId = identifier.trim().toUpperCase();
+
+  try {
+    // Try fetching by invite_token or session_id
+    const { data, error } = await supabase
+      .from("poll_drafts")
+      .select("*")
+      .or(`invite_token.eq.${cleanId},session_id.eq.${identifier}`)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) {
+      return {
+        sessionId: data.session_id,
+        inviteToken: data.invite_token,
+        currentStepIndex: data.current_step_index,
+        ratings: typeof data.ratings_json === "string" ? JSON.parse(data.ratings_json) : data.ratings_json || {},
+        updatedAt: data.updated_at,
+      };
+    }
+  } catch {}
+
+  // Local storage fallback
+  try {
+    const raw = localStorage.getItem(`draft_${cleanId}`) || localStorage.getItem(`draft_${identifier}`);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+
+  return null;
+}
