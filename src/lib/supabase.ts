@@ -161,6 +161,14 @@ export async function verifyInviteToken(token: string): Promise<{ valid: boolean
       .maybeSingle();
 
     if (!error && data) {
+      // Record that this token was accessed (but not yet submitted)
+      if (!data.is_used) {
+        supabase
+          .from("invite_tokens")
+          .update({ accessed_at: new Date().toISOString() })
+          .eq("token", cleanToken)
+          .then(() => {}); // fire and forget
+      }
       return { valid: true, isUsed: !!data.is_used };
     }
   } catch {}

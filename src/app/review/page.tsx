@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -18,7 +18,7 @@ import { useLanguageStore } from "@/store/useLanguageStore";
 import { translations } from "@/lib/translations";
 import { LanguageToggle } from "@/components/common/LanguageToggle";
 
-import { useEffect, useState } from "react";
+
 
 export default function ReviewPage() {
   const router = useRouter();
