@@ -112,6 +112,7 @@ function LandingContent() {
   const hasStarted = Object.keys(ratings).length > 0 && !hasCompleted;
 
   const handleStart = () => {
+    resetPoll();
     initOrders();
     router.push("/poll/1");
   };
@@ -276,15 +277,7 @@ function LandingContent() {
           transition={{ delay: 0.3 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 max-w-md mx-auto"
         >
-          {hasCompleted ? (
-            <button
-              onClick={() => router.push("/already-voted")}
-              className="w-full sm:w-auto px-8 py-4 skeu-btn-primary font-outfit font-bold text-base flex items-center justify-center gap-3"
-            >
-              <CheckCircle2 className="w-5 h-5" />
-              {t.viewReceiptBtn}
-            </button>
-          ) : hasStarted ? (
+          {hasStarted ? (
             <>
               <button
                 onClick={handleResume}
