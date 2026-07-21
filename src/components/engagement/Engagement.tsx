@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { Trophy, Star, Headphones } from "lucide-react";
 import type { Badge } from "@/types";
+import { useLanguageStore } from "@/store/useLanguageStore";
+import { translations } from "@/lib/translations";
 
 // Badge display card
 export function VoterBadge({
@@ -121,9 +123,10 @@ export function VoteReceipt({
     </motion.div>
   );
 }
-
-// Headphone recommendation banner
 export function HeadphoneBanner() {
+  const { language } = useLanguageStore();
+  const t = translations[language];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -134,7 +137,7 @@ export function HeadphoneBanner() {
         <Headphones className="w-5 h-5" />
       </div>
       <span className="text-text text-sm font-inter font-medium">
-        ஹெட்ஃபோன் அணியவும் 🎧
+        {t.headphonesRequired}
       </span>
     </motion.div>
   );
