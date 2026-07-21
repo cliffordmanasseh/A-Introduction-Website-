@@ -81,8 +81,8 @@ function LandingContent() {
     } else {
       setTokenStatus("valid");
 
-      // If switching to a different invite token, reset current store session first
-      if (storedToken && storedToken !== cleanCode) {
+      // If switching token or previously completed a session, reset completion state for new session
+      if ((storedToken && storedToken !== cleanCode) || hasCompleted) {
         resetPoll();
         initOrders();
       }
