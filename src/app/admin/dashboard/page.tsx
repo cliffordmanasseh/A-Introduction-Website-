@@ -340,6 +340,7 @@ export default function AdminDashboard() {
   const handleReset = async () => {
     if (confirm("⚠️ Are you sure you want to clear ALL test votes (both Cloud and Local)?")) {
       localStorage.removeItem("worship-poll-state");
+      setAllVotes([]);
       await clearCloudVotes();
       await loadAllVotes();
     }

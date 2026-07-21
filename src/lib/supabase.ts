@@ -112,13 +112,13 @@ export async function fetchCloudVotes(): Promise<CloudVoteData[]> {
  */
 export async function clearCloudVotes(): Promise<boolean> {
   try {
-    const { error } = await supabase.from("blind_votes").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    const { error } = await supabase.from("blind_votes").delete().gte("created_at", "1970-01-01T00:00:00Z");
     if (error) {
-      console.error("Clear cloud votes error:", error);
+      console.error("Clear cloud votes error:", error.message || error);
       return false;
     }
     return true;
-  } catch (err) {
+  } catch (err: any) {
     console.error("Clear cloud votes error:", err);
     return false;
   }

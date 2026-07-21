@@ -30,6 +30,11 @@ CREATE POLICY "Allow public select from blind_votes" ON blind_votes
   FOR SELECT TO anon, authenticated
   USING (true);
 
+-- Allow public to delete votes (DELETE)
+CREATE POLICY "Allow public delete from blind_votes" ON blind_votes
+  FOR DELETE TO anon, authenticated
+  USING (true);
+
 -- =================================================================
 -- Invite Tokens Schema
 -- =================================================================
